@@ -455,13 +455,14 @@ class ERC20Client extends CasperContractClient {
   public async requestBridgeBack(
     keys: Keys.AsymmetricKey,
     amount: string,
-    fee: string,
     toChainId: string,
     receiverAddress: string,
     id: string,
     paymentAmount: string,
     ttl = DEFAULT_TTL,
   ) {
+    let fee = await this.swapFee()
+    fee = fee.toString()
     const runtimeArgs = RuntimeArgs.fromMap({
       amount: CLValueBuilder.u256(amount),
       fee: CLValueBuilder.u256(fee),
