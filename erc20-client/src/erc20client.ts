@@ -15,19 +15,19 @@ import {
   EventStream,
   Keys,
   RuntimeArgs,
-} from 'casper-js-sdk'
-import { Some, None } from 'ts-results'
-import * as blake from 'blakejs'
-import { concat } from '@ethersproject/bytes'
+} from "casper-js-sdk";
+import { Some, None } from "ts-results";
+import * as blake from "blakejs";
+import { concat } from "@ethersproject/bytes";
 import {
   CasperContractClient,
   constants,
   utils,
   helpers,
   types,
-} from 'casper-js-client-helper'
-import { ERC20Events } from './constants'
-const { DEFAULT_TTL } = constants
+} from "casper-js-client-helper";
+import { ERC20Events } from "./constants";
+const { DEFAULT_TTL } = constants;
 // TODO: Refactor in both clients
 const {
   fromCLMap,
@@ -37,20 +37,24 @@ const {
   contractSimpleGetter,
   contractCallFn,
   createRecipientAddress,
-} = helpers
+} = helpers;
 
-const genRanHex = size => [...Array(size)].map(() => Math.floor(Math.random() * 16).toString(16)).join('');
+const genRanHex = (size) =>
+  [...Array(size)]
+    .map(() => Math.floor(Math.random() * 16).toString(16))
+    .join("");
 
 // TODO: Refactor in both clients
-type RecipientType = types.RecipientType
-type IPendingDeploy = types.IPendingDeploy
-type IClassContractCallParams = types.IClassContractCallParams
+type RecipientType = types.RecipientType;
+type IPendingDeploy = types.IPendingDeploy;
+type IClassContractCallParams = types.IClassContractCallParams;
 
 class ERC20Client extends CasperContractClient {
   protected namedKeys?: {
-    allowances: string
-    balances: string
-  }
+    allowances: string;
+    balances: string;
+    request_map: string;
+  };
 
   /**
    * Installs the ERC20 contract.
@@ -77,7 +81,7 @@ class ERC20Client extends CasperContractClient {
     origin_chainid: string,
     origin_contract_address: string,
     paymentAmount: string,
-    wasmPath: string,
+    wasmPath: string
   ) {
     const runtimeArgs = RuntimeArgs.fromMap({
       name: CLValueBuilder.string(tokenName),
@@ -89,7 +93,7 @@ class ERC20Client extends CasperContractClient {
       dev: CLValueBuilder.string(dev),
       origin_chainid: CLValueBuilder.u256(origin_chainid),
       origin_contract_address: CLValueBuilder.string(origin_contract_address),
-    })
+    });
 
     return await installContract(
       this.chainName,
@@ -97,8 +101,8 @@ class ERC20Client extends CasperContractClient {
       keys,
       runtimeArgs,
       paymentAmount,
-      wasmPath,
-    )
+      wasmPath
+    );
   }
 
   /**
@@ -107,16 +111,16 @@ class ERC20Client extends CasperContractClient {
    * @param hash Contract hash (raw hex string as well as `hash-` prefixed format is supported).
    */
   public async setContractHash(hash: string) {
-    const properHash = hash.startsWith('hash-') ? hash.slice(5) : hash
+    const properHash = hash.startsWith("hash-") ? hash.slice(5) : hash;
     const { contractPackageHash, namedKeys } = await setClient(
       this.nodeAddress,
       properHash,
-      ['balances', 'allowances'],
-    )
-    this.contractHash = hash
-    this.contractPackageHash = contractPackageHash
+      ["balances", "allowances", "request_map"]
+    );
+    this.contractHash = hash;
+    this.contractPackageHash = contractPackageHash;
     /* @ts-ignore */
-    this.namedKeys = namedKeys
+    this.namedKeys = namedKeys;
   }
 
   /**
@@ -124,8 +128,8 @@ class ERC20Client extends CasperContractClient {
    */
   public async name() {
     return await contractSimpleGetter(this.nodeAddress, this.contractHash!, [
-      'name',
-    ])
+      "name",
+    ]);
   }
 
   /**
@@ -133,8 +137,8 @@ class ERC20Client extends CasperContractClient {
    */
   public async symbol() {
     return await contractSimpleGetter(this.nodeAddress, this.contractHash!, [
-      'symbol',
-    ])
+      "symbol",
+    ]);
   }
 
   /**
@@ -142,8 +146,8 @@ class ERC20Client extends CasperContractClient {
    */
   public async decimals() {
     return await contractSimpleGetter(this.nodeAddress, this.contractHash!, [
-      'decimals',
-    ])
+      "decimals",
+    ]);
   }
 
   /**
@@ -151,38 +155,38 @@ class ERC20Client extends CasperContractClient {
    */
   public async totalSupply() {
     return await contractSimpleGetter(this.nodeAddress, this.contractHash!, [
-      'total_supply',
-    ])
+      "total_supply",
+    ]);
   }
 
   public async swapFee() {
     return await contractSimpleGetter(this.nodeAddress, this.contractHash!, [
-      'swap_fee',
-    ])
+      "swap_fee",
+    ]);
   }
 
   public async minter() {
     return await contractSimpleGetter(this.nodeAddress, this.contractHash!, [
-      'minter',
-    ])
+      "minter",
+    ]);
   }
 
   public async originChainId() {
     return await contractSimpleGetter(this.nodeAddress, this.contractHash!, [
-      'origin_chainid',
-    ])
+      "origin_chainid",
+    ]);
   }
 
   public async originContractAddress() {
     return await contractSimpleGetter(this.nodeAddress, this.contractHash!, [
-      'origin_contract_address',
-    ])
+      "origin_contract_address",
+    ]);
   }
 
   public async dev() {
     return await contractSimpleGetter(this.nodeAddress, this.contractHash!, [
-      'dev',
-    ])
+      "dev",
+    ]);
   }
 
   /**
@@ -202,22 +206,22 @@ class ERC20Client extends CasperContractClient {
     recipient: RecipientType,
     transferAmount: string,
     paymentAmount: string,
-    ttl = DEFAULT_TTL,
+    ttl = DEFAULT_TTL
   ) {
     const runtimeArgs = RuntimeArgs.fromMap({
       recipient: createRecipientAddress(recipient),
       amount: CLValueBuilder.u256(transferAmount),
-    })
+    });
 
     return await this.contractCall({
-      entryPoint: 'transfer',
+      entryPoint: "transfer",
       keys,
       paymentAmount,
       runtimeArgs,
       cb: (deployHash) =>
         this.addPendingDeploy(ERC20Events.Transfer, deployHash),
       ttl,
-    })
+    });
   }
 
   /**
@@ -238,23 +242,23 @@ class ERC20Client extends CasperContractClient {
     recipient: RecipientType,
     transferAmount: string,
     paymentAmount: string,
-    ttl = DEFAULT_TTL,
+    ttl = DEFAULT_TTL
   ) {
     const runtimeArgs = RuntimeArgs.fromMap({
       recipient: createRecipientAddress(recipient),
       owner: createRecipientAddress(owner),
       amount: CLValueBuilder.u256(transferAmount),
-    })
+    });
 
     return await this.contractCall({
-      entryPoint: 'transfer_from',
+      entryPoint: "transfer_from",
       keys,
       paymentAmount,
       runtimeArgs,
       cb: (deployHash) =>
         this.addPendingDeploy(ERC20Events.Transfer, deployHash),
       ttl,
-    })
+    });
   }
 
   /**
@@ -273,22 +277,22 @@ class ERC20Client extends CasperContractClient {
     spender: RecipientType,
     approveAmount: string,
     paymentAmount: string,
-    ttl = DEFAULT_TTL,
+    ttl = DEFAULT_TTL
   ) {
     const runtimeArgs = RuntimeArgs.fromMap({
       spender: createRecipientAddress(spender),
       amount: CLValueBuilder.u256(approveAmount),
-    })
+    });
 
     return await this.contractCall({
-      entryPoint: 'approve',
+      entryPoint: "approve",
       keys,
       paymentAmount,
       runtimeArgs,
       cb: (deployHash) =>
         this.addPendingDeploy(ERC20Events.Approve, deployHash),
       ttl,
-    })
+    });
   }
 
   /**
@@ -299,15 +303,34 @@ class ERC20Client extends CasperContractClient {
    * @returns Balance of an account.
    */
   public async balanceOf(account: RecipientType) {
-    const key = createRecipientAddress(account)
-    const keyBytes = CLValueParsers.toBytes(key).unwrap()
-    const itemKey = Buffer.from(keyBytes).toString('base64')
+    const key = createRecipientAddress(account);
+    const keyBytes = CLValueParsers.toBytes(key).unwrap();
+    const itemKey = Buffer.from(keyBytes).toString("base64");
     const result = await utils.contractDictionaryGetter(
       this.nodeAddress,
       itemKey,
-      this.namedKeys!.balances,
-    )
-    return result.toString()
+      this.namedKeys!.balances
+    );
+    return result.toString();
+  }
+
+  /**
+   * Returns the balance of the account address.
+   *
+   * @param account Account address (it supports CLPublicKey, CLAccountHash and CLByteArray).
+   *
+   * @returns Balance of an account.
+   */
+  public async readRequestIndex(id: string) {
+    const keyBytes = CLValueParsers.toBytes(CLValueBuilder.string(id)).unwrap();
+    const blaked = blake.blake2b(keyBytes, undefined, 32);
+    const encodedBytes = Buffer.from(blaked).toString("hex");
+    const result = await utils.contractDictionaryGetter(
+      this.nodeAddress,
+      encodedBytes,
+      this.namedKeys!.balances
+    );
+    return result.toString();
   }
 
   /**
@@ -320,22 +343,22 @@ class ERC20Client extends CasperContractClient {
    */
   public async allowances(owner: RecipientType, spender: RecipientType) {
     // TODO: REUSEABLE METHOD
-    const keyOwner = createRecipientAddress(owner)
-    const keySpender = createRecipientAddress(spender)
+    const keyOwner = createRecipientAddress(owner);
+    const keySpender = createRecipientAddress(spender);
     const finalBytes = concat([
       CLValueParsers.toBytes(keyOwner).unwrap(),
       CLValueParsers.toBytes(keySpender).unwrap(),
-    ])
-    const blaked = blake.blake2b(finalBytes, undefined, 32)
-    const encodedBytes = Buffer.from(blaked).toString('hex')
+    ]);
+    const blaked = blake.blake2b(finalBytes, undefined, 32);
+    const encodedBytes = Buffer.from(blaked).toString("hex");
 
     const result = await utils.contractDictionaryGetter(
       this.nodeAddress,
       encodedBytes,
-      this.namedKeys!.allowances,
-    )
+      this.namedKeys!.allowances
+    );
 
-    return result.toString()
+    return result.toString();
   }
 
   public async mint(
@@ -344,25 +367,25 @@ class ERC20Client extends CasperContractClient {
     transferAmount: string,
     mintid: string,
     paymentAmount: string,
-    ttl = DEFAULT_TTL,
+    ttl = DEFAULT_TTL
   ) {
-    let swapFee = await this.swapFee()
-    swapFee = swapFee.toString()
+    let swapFee = await this.swapFee();
+    swapFee = swapFee.toString();
     const runtimeArgs = RuntimeArgs.fromMap({
       recipient: createRecipientAddress(recipient),
       amount: CLValueBuilder.u256(transferAmount),
       mintid: CLValueBuilder.string(mintid),
       swap_fee: CLValueBuilder.u256(swapFee),
-    })
+    });
 
     return await this.contractCall({
-      entryPoint: 'mint',
+      entryPoint: "mint",
       keys,
       paymentAmount,
       runtimeArgs,
       cb: (deployHash) => this.addPendingDeploy(ERC20Events.Mint, deployHash),
       ttl,
-    })
+    });
   }
 
   public async createUnsignedMint(
@@ -371,88 +394,88 @@ class ERC20Client extends CasperContractClient {
     transferAmount: string,
     mintid: string,
     paymentAmount: string,
-    ttl = DEFAULT_TTL,
+    ttl = DEFAULT_TTL
   ) {
-    let swapFee = await this.swapFee()
-    swapFee = swapFee.toString()
+    let swapFee = await this.swapFee();
+    swapFee = swapFee.toString();
     const runtimeArgs = RuntimeArgs.fromMap({
       recipient: createRecipientAddress(recipient),
       amount: CLValueBuilder.u256(transferAmount),
       mintid: CLValueBuilder.string(mintid),
       swap_fee: CLValueBuilder.u256(swapFee),
-    })
+    });
 
     return await this.createUnsignedContractCall({
-      entryPoint: 'mint',
+      entryPoint: "mint",
       publicKey,
       paymentAmount,
       runtimeArgs,
       cb: (deploy) => this.addPendingDeploy(ERC20Events.Mint, deploy),
       ttl,
-    })
+    });
   }
 
   public async changeMinter(
     keys: Keys.AsymmetricKey,
     minter: RecipientType,
     paymentAmount: string,
-    ttl = DEFAULT_TTL,
+    ttl = DEFAULT_TTL
   ) {
     const runtimeArgs = RuntimeArgs.fromMap({
       minter: createRecipientAddress(minter),
-    })
+    });
 
     return await this.contractCall({
-      entryPoint: 'change_minter',
+      entryPoint: "change_minter",
       keys,
       paymentAmount,
       runtimeArgs,
       cb: (deployHash) =>
         this.addPendingDeploy(ERC20Events.ChangeMinter, deployHash),
       ttl,
-    })
+    });
   }
 
   public async changeDev(
     keys: Keys.AsymmetricKey,
     dev: RecipientType,
     paymentAmount: string,
-    ttl = DEFAULT_TTL,
+    ttl = DEFAULT_TTL
   ) {
     const runtimeArgs = RuntimeArgs.fromMap({
       dev: createRecipientAddress(dev),
-    })
+    });
 
     return await this.contractCall({
-      entryPoint: 'change_dev',
+      entryPoint: "change_dev",
       keys,
       paymentAmount,
       runtimeArgs,
       cb: (deployHash) =>
         this.addPendingDeploy(ERC20Events.ChangeDev, deployHash),
       ttl,
-    })
+    });
   }
 
   public async changeSwapFee(
     keys: Keys.AsymmetricKey,
     swapFee: string,
     paymentAmount: string,
-    ttl = DEFAULT_TTL,
+    ttl = DEFAULT_TTL
   ) {
     const runtimeArgs = RuntimeArgs.fromMap({
       swap_fee: CLValueBuilder.u256(swapFee),
-    })
+    });
 
     return await this.contractCall({
-      entryPoint: 'change_swap_fee',
+      entryPoint: "change_swap_fee",
       keys,
       paymentAmount,
       runtimeArgs,
       cb: (deployHash) =>
         this.addPendingDeploy(ERC20Events.ChangeFee, deployHash),
       ttl,
-    })
+    });
   }
 
   public async requestBridgeBack(
@@ -461,29 +484,29 @@ class ERC20Client extends CasperContractClient {
     toChainId: string,
     receiverAddress: string,
     paymentAmount: string,
-    ttl = DEFAULT_TTL,
+    ttl = DEFAULT_TTL
   ) {
-    let fee = await this.swapFee()
-    fee = fee.toString()
-    let id = genRanHex(64).toLowerCase()
+    let fee = await this.swapFee();
+    fee = fee.toString();
+    let id = genRanHex(64).toLowerCase();
     const runtimeArgs = RuntimeArgs.fromMap({
       amount: CLValueBuilder.u256(amount),
       fee: CLValueBuilder.u256(fee),
       to_chainid: CLValueBuilder.u256(toChainId),
       receiver_address: CLValueBuilder.string(receiverAddress),
       id: CLValueBuilder.u256(id),
-    })
+    });
 
     return await this.contractCall({
-      entryPoint: 'request_bridge_back',
+      entryPoint: "request_bridge_back",
       keys,
       paymentAmount,
       runtimeArgs,
       cb: (deployHash) =>
         this.addPendingDeploy(ERC20Events.ChangeFee, deployHash),
       ttl,
-    })
+    });
   }
 }
 
-export default ERC20Client
+export default ERC20Client;
