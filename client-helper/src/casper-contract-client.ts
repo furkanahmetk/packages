@@ -109,7 +109,6 @@ class ContractClient {
   }: IAppendSignature) {
     const client = new CasperClient(nodeAddress)
     const approval = new DeployUtil.Approval()
-    console.log('public key', publicKey, deploy, signature, nodeAddress)
     approval.signer = publicKey.toHex()
     if (publicKey.isEd25519()) {
       approval.signature = Keys.Ed25519.accountHex(signature)
