@@ -303,15 +303,22 @@ class ERC20Client extends CasperContractClient {
    * @returns Balance of an account.
    */
   public async balanceOf(account: RecipientType) {
-    const key = createRecipientAddress(account);
-    const keyBytes = CLValueParsers.toBytes(key).unwrap();
-    const itemKey = Buffer.from(keyBytes).toString("base64");
-    const result = await utils.contractDictionaryGetter(
-      this.nodeAddress,
-      itemKey,
-      this.namedKeys!.balances
-    );
-    return result.toString();
+    try {
+      const key = createRecipientAddress(account);
+      const keyBytes = CLValueParsers.toBytes(key).unwrap();
+      const itemKey = Buffer.from(keyBytes).toString("base64");
+      const result = await utils.contractDictionaryGetter(
+        this.nodeAddress,
+        itemKey,
+        this.namedKeys!.balances
+      );
+      return result.toString();
+    } catch (e) {
+      if (e.toString().includes("Failed to find base key at path")) {
+        return '0'
+      }
+      throw e
+    }
   }
 
   /**
@@ -322,15 +329,23 @@ class ERC20Client extends CasperContractClient {
    * @returns Balance of an account.
    */
   public async readRequestIndex(id: string) {
-    const keyBytes = CLValueParsers.toBytes(CLValueBuilder.string(id)).unwrap();
-    const blaked = blake.blake2b(keyBytes, undefined, 32);
-    const encodedBytes = Buffer.from(blaked).toString("hex");
-    const result = await utils.contractDictionaryGetter(
-      this.nodeAddress,
-      encodedBytes,
-      this.namedKeys!.balances
-    );
-    return result.toString();
+    try {
+      const keyBytes = CLValueParsers.toBytes(CLValueBuilder.string(id)).unwrap();
+      const blaked = blake.blake2b(keyBytes, undefined, 32);
+      const encodedBytes = Buffer.from(blaked).toString("hex");
+      console.log('key', encodedBytes)
+      const result = await utils.contractDictionaryGetter(
+        this.nodeAddress,
+        encodedBytes,
+        this.namedKeys!.balances
+      );
+      return result.toString();
+    } catch (e) {
+      if (e.toString().includes("Failed to find base key at path")) {
+        return '0'
+      }
+      throw e
+    }
   }
 
   /**
