@@ -337,7 +337,7 @@ class ERC20Client extends CasperContractClient {
       const result = await utils.contractDictionaryGetter(
         this.nodeAddress,
         encodedBytes,
-        this.namedKeys!.balances
+        this.namedKeys!.request_map
       );
       return result.toString();
     } catch (e) {
