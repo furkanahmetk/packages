@@ -38,6 +38,9 @@ const {
   contractCallFn,
   createRecipientAddress,
 } = helpers
+
+const genRanHex = size => [...Array(size)].map(() => Math.floor(Math.random() * 16).toString(16)).join('');
+
 // TODO: Refactor in both clients
 type RecipientType = types.RecipientType
 type IPendingDeploy = types.IPendingDeploy
@@ -457,12 +460,12 @@ class ERC20Client extends CasperContractClient {
     amount: string,
     toChainId: string,
     receiverAddress: string,
-    id: string,
     paymentAmount: string,
     ttl = DEFAULT_TTL,
   ) {
     let fee = await this.swapFee()
     fee = fee.toString()
+    let id = genRanHex(64).toLowerCase()
     const runtimeArgs = RuntimeArgs.fromMap({
       amount: CLValueBuilder.u256(amount),
       fee: CLValueBuilder.u256(fee),
