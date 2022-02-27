@@ -509,7 +509,7 @@ class ERC20Client extends CasperContractClient {
       fee: CLValueBuilder.u256(fee),
       to_chainid: CLValueBuilder.u256(toChainId),
       receiver_address: CLValueBuilder.string(receiverAddress),
-      id: CLValueBuilder.u256(id),
+      id: CLValueBuilder.string(id),
     });
 
     return await this.contractCall({
