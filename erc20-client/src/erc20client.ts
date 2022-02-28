@@ -53,7 +53,7 @@ class ERC20Client extends CasperContractClient {
   protected namedKeys?: {
     allowances: string;
     balances: string;
-    request_map: string;
+    requestMap: string;
   };
 
   /**
@@ -330,14 +330,10 @@ class ERC20Client extends CasperContractClient {
    */
   public async readRequestIndex(id: string) {
     try {
-      const keyBytes = CLValueParsers.toBytes(CLValueBuilder.string(id)).unwrap();
-      const blaked = blake.blake2b(keyBytes, undefined, 32);
-      const encodedBytes = Buffer.from(blaked).toString("hex");
-      console.log('key', encodedBytes)
       const result = await utils.contractDictionaryGetter(
         this.nodeAddress,
-        encodedBytes,
-        this.namedKeys!.request_map
+        id,
+        this.namedKeys!.requestMap
       );
       return result.toString();
     } catch (e) {
