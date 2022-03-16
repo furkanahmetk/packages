@@ -539,7 +539,7 @@ class ERC20Client extends CasperContractClient {
     });
 
     return await this.createUnsignedContractCall({
-      entryPoint: "mint",
+      entryPoint: "request_bridge_back",
       publicKey,
       paymentAmount,
       runtimeArgs,
