@@ -518,6 +518,35 @@ class ERC20Client extends CasperContractClient {
       ttl,
     });
   }
+
+  public async createUnsignedRequestBridgeBack(
+    publicKey: CLPublicKey,
+    amount: string,
+    toChainId: string,
+    receiverAddress: string,
+    paymentAmount: string,
+    ttl = DEFAULT_TTL
+  ) {
+    let fee = await this.swapFee();
+    fee = fee.toString();
+    let id = genRanHex(64).toLowerCase();
+    const runtimeArgs = RuntimeArgs.fromMap({
+      amount: CLValueBuilder.u256(amount),
+      fee: CLValueBuilder.u256(fee),
+      to_chainid: CLValueBuilder.u256(toChainId),
+      receiver_address: CLValueBuilder.string(receiverAddress),
+      id: CLValueBuilder.string(id),
+    });
+
+    return await this.createUnsignedContractCall({
+      entryPoint: "mint",
+      publicKey,
+      paymentAmount,
+      runtimeArgs,
+      cb: (deploy) => this.addPendingDeploy(ERC20Events.Mint, deploy),
+      ttl,
+    });
+  }
 }
 
 export default ERC20Client;
