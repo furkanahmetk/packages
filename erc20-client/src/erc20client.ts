@@ -27,6 +27,8 @@ import {
   types,
 } from "casper-js-client-helper";
 import { ERC20Events } from "./constants";
+import { sha256 } from "ethereum-cryptography/sha256";
+
 const { DEFAULT_TTL } = constants;
 // TODO: Refactor in both clients
 const {
@@ -315,9 +317,9 @@ class ERC20Client extends CasperContractClient {
       return result.toString();
     } catch (e) {
       if (e.toString().includes("Failed to find base key at path")) {
-        return '0'
+        return "0";
       }
-      throw e
+      throw e;
     }
   }
 
@@ -338,9 +340,9 @@ class ERC20Client extends CasperContractClient {
       return result.toString();
     } catch (e) {
       if (e.toString().includes("Failed to find base key at path")) {
-        return '0'
+        return "0";
       }
-      throw e
+      throw e;
     }
   }
 
@@ -538,7 +540,7 @@ class ERC20Client extends CasperContractClient {
       id: CLValueBuilder.string(id),
     });
 
-    return await this.createUnsignedContractCall({
+    let deploy = await this.createUnsignedContractCall({
       entryPoint: "request_bridge_back",
       publicKey,
       paymentAmount,
@@ -546,6 +548,8 @@ class ERC20Client extends CasperContractClient {
       cb: (deploy) => this.addPendingDeploy(ERC20Events.Mint, deploy),
       ttl,
     });
+    let hashToSign = sha256(Buffer.from(deploy.hash)).toString("hex");
+    return { deploy, hashToSign };
   }
 }
 
