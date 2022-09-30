@@ -5,7 +5,7 @@ import { CLValueBuilder, RuntimeArgs } from "casper-js-sdk";
 const { setClient, contractSimpleGetter, createRecipientAddress } = helpers;
 
 export class CEP78Client extends CasperContractClient {
-  constructor(contractHash, nodeAddress, chainName, public namedKeysList: string[]) {
+  constructor(contractHash, nodeAddress, chainName, public namedKeysList: string[] = []) {
     super(nodeAddress, chainName);
     this.contractHash = contractHash.startsWith("hash-")
         ? contractHash.slice(5)
