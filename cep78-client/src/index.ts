@@ -1,6 +1,16 @@
 import { CasperContractClient, helpers, utils } from 'casper-js-client-helper'
 import { DEFAULT_TTL } from 'casper-js-client-helper/dist/constants'
-import { CLValueBuilder, RuntimeArgs, CLAccountHash, CLString, CLPublicKey } from 'casper-js-sdk'
+import {
+  CLValueBuilder,
+  RuntimeArgs,
+  CLAccountHash,
+  CLString,
+  CLPublicKey,
+  CLByteArray,
+  CLKey,
+  CLValueParsers,
+} from 'casper-js-sdk'
+import blake from 'blakejs'
 
 const { setClient, contractSimpleGetter, createRecipientAddress } = helpers
 
@@ -17,7 +27,7 @@ export class CEP78Client extends CasperContractClient {
       'metadata_custom_validated',
       'metadata_nft721',
       'metadata_raw',
-      'operator',
+      'operators',
       'owned_tokens',
       'token_issuers',
       'page_table',
@@ -27,6 +37,18 @@ export class CEP78Client extends CasperContractClient {
       'page_3',
       'page_4',
       'page_5',
+      'page_6',
+      'page_7',
+      'page_8',
+      'page_9',
+      'page_10',
+      'user_mint_id_list',
+      'hash_by_index',
+      'events',
+      'index_by_hash',
+      'receipt_name',
+      'rlo_mflag',
+      'reporting_mode',
     ]
     this.namedKeysList.push(...namedKeysList)
   }
@@ -252,6 +274,43 @@ export class CEP78Client extends CasperContractClient {
     }
   }
 
+  async getOwnedTokenIdsHash(account) {
+    const table = []
+    try {
+      const itemKey = CEP78Client.getAccountItemKey(account)
+      const result = await utils.contractDictionaryGetter(this.nodeAddress, itemKey, this.namedKeys.pageTable)
+
+      for (let i = 0; i < result.length; i++) {
+        if (result[i].data == true) {
+          table.push(i)
+        }
+      }
+
+      const tokenIds = []
+
+      for (let j = 0; j < table.length; j++) {
+        const k = table[j]
+
+        const numberOfPage = 'page_' + k
+        const result1 = await utils.contractDictionaryGetter(this.nodeAddress, itemKey, this.namedKeys[numberOfPage])
+        for (let i = 0; i < result1.length; i++) {
+          if (result1[i].data == true) {
+            tokenIds.push(i)
+          }
+        }
+      }
+      const final = []
+      for (let m = 0; m < tokenIds.length; m++) {
+        const string = tokenIds[m].toString()
+        const result2 = await utils.contractDictionaryGetter(this.nodeAddress, string, this.namedKeys.hashByIndex)
+        final.push(result2)
+      }
+      return final
+    } catch (e) {
+      throw e
+    }
+  }
+
   async pageTable(account) {
     try {
       const itemKey = CEP78Client.getAccountItemKey(account)
@@ -458,6 +517,28 @@ export class CEP78Client extends CasperContractClient {
       cb: deployHash => {},
       ttl: ttl ? ttl : DEFAULT_TTL,
     })
+  }
+
+  async checkOperatorDictionaryKey(caller, operator) {
+    try {
+      const callerKey = createRecipientAddress(CLPublicKey.fromHex(caller))
+      const contracthashbytearray = new CLByteArray(Uint8Array.from(Buffer.from(operator, 'hex')))
+      const operatorKey = new CLKey(contracthashbytearray)
+      const callerKeyBytes = CLValueParsers.toBytes(callerKey).val
+      const operatorKeyBytes = CLValueParsers.toBytes(operatorKey).val
+
+      if (operatorKeyBytes instanceof Uint8Array && callerKeyBytes instanceof Uint8Array) {
+        const mix = Array.from(callerKeyBytes).concat(Array.from(operatorKeyBytes))
+        const itemKeyArray = blake.blake2b(Buffer.from(mix), null, 32)
+        const itemKey = Buffer.from(itemKeyArray).toString('hex')
+        const result = await utils.contractDictionaryGetter(this.nodeAddress, itemKey, this.namedKeys.operators)
+        return result
+      }
+
+      return undefined
+    } catch (e) {
+      console.error(e)
+    }
   }
 
   async transfer(keys, source, recipient, tokenId, paymentAmount, ttl) {
